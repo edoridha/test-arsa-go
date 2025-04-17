@@ -41,17 +41,19 @@ func GetProductionHouses(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProductionHouseByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	log.Println("ID received:", id)
-	database := db.GetDBInstance()
-	var productionHouse models.ProductionHouse
-	if err := database.First(&productionHouse, id).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
+    id := chi.URLParam(r, "id")
+    log.Println("ID received:", id)
+    database := db.GetDBInstance()
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(productionHouse)
+    var productionHouse models.ProductionHouse
+    // Gunakan Preload untuk memuat relasi Films
+    if err := database.Preload("Films").First(&productionHouse, id).Error; err != nil {
+        http.Error(w, err.Error(), http.StatusNotFound)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(productionHouse)
 }
 
 func UpdateProductionHouse(w http.ResponseWriter, r *http.Request) {
@@ -126,16 +128,18 @@ func GetFilms(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetFilmByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	log.Println("ID received:", id)
-	database := db.GetDBInstance()
-	var film models.Film
-	if err := database.First(&film, id).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
+    id := chi.URLParam(r, "id")
+    log.Println("ID received:", id)
+    database := db.GetDBInstance()
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(film)
+    var film models.Film
+    // Gunakan Preload untuk memuat relasi ProductionHouse
+    if err := database.Preload("ProductionHouse").First(&film, "id = ?", id).Error; err != nil {
+        http.Error(w, err.Error(), http.StatusNotFound)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(film)
 }
 
